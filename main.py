@@ -16,6 +16,7 @@ client.help_command = commands.MinimalHelpCommand()
 # Global DogCoin price variable
 current_price = 500.0
 
+
 # --------------------------
 # Database Initializations
 # --------------------------
@@ -32,6 +33,7 @@ def initialize_database():
             )
         ''')
         conn.commit()
+
 
 def initialize_crypto_db():
     """Initialize crypto.db with a prices table for DogCoin price history."""
@@ -52,8 +54,10 @@ def initialize_crypto_db():
                            (timestamp, current_price, "dogcoin"))
             conn.commit()
 
+
 initialize_database()
 initialize_crypto_db()
+
 
 # --------------------------
 # Utility Functions for balance.db
@@ -67,6 +71,7 @@ def get_balance(user_id):
         row = cursor.fetchone()
     return row[0] if row else 0
 
+
 def get_holdings(user_id):
     """Return the DogCoin holdings for the given user."""
     with sqlite3.connect("balance.db") as conn:
@@ -75,18 +80,21 @@ def get_holdings(user_id):
         row = cursor.fetchone()
     return row[0] if row else 0
 
+
 def update_balance(user_id, amount):
     """Update the fiat balance for a user by the given amount (can be negative)."""
     with sqlite3.connect("balance.db") as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT balance FROM balance WHERE user_id = ?", (user_id,))
         row = cursor.fetchone()
-        new_balance = max((row[0] + amount) if row else amount, 0)
+        new_balance = round(max((row[0] + amount) if row else amount, 0), 2)
         if row:
             cursor.execute("UPDATE balance SET balance = ? WHERE user_id = ?", (new_balance, user_id))
         else:
-            cursor.execute("INSERT INTO balance (user_id, balance, holdings) VALUES (?, ?, ?)", (user_id, new_balance, 0))
+            cursor.execute("INSERT INTO balance (user_id, balance, holdings) VALUES (?, ?, ?)",
+                           (user_id, new_balance, 0))
         conn.commit()
+
 
 def update_holdings(user_id, amount):
     """Update the DogCoin holdings for a user by the given amount (can be negative)."""
@@ -94,12 +102,14 @@ def update_holdings(user_id, amount):
         cursor = conn.cursor()
         cursor.execute("SELECT holdings FROM balance WHERE user_id = ?", (user_id,))
         row = cursor.fetchone()
-        new_holdings = max((row[0] + amount) if row else amount, 0)
+        new_holdings = round(max((row[0] + amount) if row else amount, 0), 2)
         if row:
             cursor.execute("UPDATE balance SET holdings = ? WHERE user_id = ?", (new_holdings, user_id))
         else:
-            cursor.execute("INSERT INTO balance (user_id, balance, holdings) VALUES (?, ?, ?)", (user_id, 0, new_holdings))
+            cursor.execute("INSERT INTO balance (user_id, balance, holdings) VALUES (?, ?, ?)",
+                           (user_id, 0, new_holdings))
         conn.commit()
+
 
 # --------------------------
 # Price History Functions (crypto.db)
@@ -115,37 +125,39 @@ def get_price_history():
         data = data[-30:]
     return data
 
+
 def plot_price_history():
     """Plot DogCoin price history with a black background, grid color #333333, and 0.5x marker size."""
     data = get_price_history()
     if not data:
         return None
     timestamps, prices = zip(*data)
-    
+
     # Create figure and axes with a black background
     fig, ax = plt.subplots(figsize=(8, 4), facecolor='black')
     ax.set_facecolor('black')
-    
+
     # Plot data with markersize set to 3 (approx. 0.5x the default size)
     ax.plot(timestamps, prices, marker='o', markersize=3, linestyle='-', color='b')
-    
+
     # Set labels and title with white text
     ax.set_xlabel("Timestamp", color='white')
     ax.set_ylabel("Price (⬢)", color='white')
     ax.set_title("DogCoin Price History", color='white')
     ax.tick_params(axis='x', colors='white')
     ax.tick_params(axis='y', colors='white')
-    
+
     # Add grid with specified color and linewidth
     ax.grid(True, color="#333333", linewidth=0.5)
     plt.xticks(rotation=45)
-    
+
     # Save plot to a BytesIO buffer
     buf = io.BytesIO()
     fig.savefig(buf, format='png', facecolor=fig.get_facecolor(), bbox_inches="tight")
     buf.seek(0)
     plt.close(fig)
     return buf
+
 
 # --------------------------
 # Background Task to Update Price
@@ -161,7 +173,7 @@ async def update_price_with_ai():
         cursor.execute("SELECT price FROM prices WHERE symbol = 'dogcoin' ORDER BY timestamp DESC LIMIT 40")
         data = cursor.fetchall()
         prices = [row[0] for row in data if row[0] is not None]
-        
+
         # Calculate a relative trend rather than an absolute difference
         if len(prices) < 2 or prices[-1] == 0:
             recent_trend = 0
@@ -184,14 +196,15 @@ async def update_price_with_ai():
         cursor.execute("INSERT INTO prices (timestamp, price, symbol) VALUES (?, ?, ?)",
                        (timestamp, current_price, "dogcoin"))
         conn.commit()
-        
+
     print(f"[AI Bot] Updated price to {current_price} ⬢")
+
 
 # --------------------------
 # Bot Commands (All Responses as Embeds)
 # --------------------------
 
-@client.command(aliases=["bal", "wal"]) #Balance Alias 
+@client.command(aliases=["bal", "wal"])  # Balance Alias
 async def balance(ctx):
     """Display your fiat balance and DogCoin holdings."""
     user_id = ctx.author.id
@@ -206,6 +219,7 @@ async def balance(ctx):
         color=discord.Color.green()
     )
     await ctx.send(embed=embed)
+
 
 @client.command()
 async def trade(ctx, action: str, amount: str):
@@ -222,12 +236,12 @@ async def trade(ctx, action: str, amount: str):
     fiat = row[0] if row else 0
     holdings = row[1] if row else 0
 
-    # Determine trade amount
+    # trade shi fr
     if amount.lower() in ["max", "all"]:
         if action.lower() == "buy":
-            trade_amount = fiat / current_price
+            raw_trade_amount = fiat / current_price
         elif action.lower() == "sell":
-            trade_amount = holdings
+            raw_trade_amount = holdings
         else:
             embed = discord.Embed(
                 description="Invalid action. Use **buy** or **sell**.",
@@ -237,7 +251,7 @@ async def trade(ctx, action: str, amount: str):
             return
     else:
         try:
-            trade_amount = float(amount)
+            raw_trade_amount = float(amount)
         except ValueError:
             embed = discord.Embed(
                 description="Invalid amount. Please specify a number, 'max', or 'all'.",
@@ -246,16 +260,18 @@ async def trade(ctx, action: str, amount: str):
             await ctx.send(embed=embed)
             return
 
-    trade_amount = max(trade_amount, 0)
+    # Round to 2 dec places
+    trade_amount = round(max(raw_trade_amount, 0), 2)
     total_value = round(trade_amount * current_price, 2)
 
     if action.lower() == "buy":
         if fiat >= total_value and trade_amount > 0:
             update_balance(user_id, -total_value)
             update_holdings(user_id, trade_amount)
+            new_fiat = round(fiat - total_value, 2)
             embed = discord.Embed(
                 title="Purchase Successful",
-                description=f"You bought **{trade_amount:.2f} DogCoin** for **{total_value:.2f} ⬢**.\nNew fiat balance: **{fiat - total_value:.2f} ⬢**.",
+                description=f"You bought **{trade_amount:.2f} DogCoin** for **{total_value:.2f} ⬢**.\nNew fiat balance: **{new_fiat:.2f} ⬢**.",
                 color=discord.Color.green()
             )
         else:
@@ -267,9 +283,10 @@ async def trade(ctx, action: str, amount: str):
         if holdings >= trade_amount and trade_amount > 0:
             update_holdings(user_id, -trade_amount)
             update_balance(user_id, total_value)
+            new_fiat = round(fiat + total_value, 2)
             embed = discord.Embed(
                 title="Sale Successful",
-                description=f"You sold **{trade_amount:.2f} DogCoin** for **{total_value:.2f} ⬢**.\nNew fiat balance: **{fiat + total_value:.2f} ⬢**.",
+                description=f"You sold **{trade_amount:.2f} DogCoin** for **{total_value:.2f} ⬢**.\nNew fiat balance: **{new_fiat:.2f} ⬢**.",
                 color=discord.Color.blue()
             )
         else:
@@ -284,6 +301,7 @@ async def trade(ctx, action: str, amount: str):
         )
 
     await ctx.send(embed=embed)
+
 
 @client.command()
 async def price(ctx):
@@ -304,6 +322,7 @@ async def price(ctx):
         )
         await ctx.send(embed=embed)
 
+
 @client.command()
 async def work(ctx):
     """Earn a random amount of fiat ⬢ by working."""
@@ -316,6 +335,7 @@ async def work(ctx):
         color=discord.Color.gold()
     )
     await ctx.send(embed=embed)
+
 
 @client.command()
 async def give(ctx, member: discord.Member, amount: int):
@@ -349,6 +369,7 @@ async def give(ctx, member: discord.Member, amount: int):
         )
     await ctx.send(embed=embed)
 
+
 @client.command()
 async def ping(ctx):
     """Show the bot's latency."""
@@ -359,6 +380,7 @@ async def ping(ctx):
         color=discord.Color.blue()
     )
     await ctx.send(embed=embed)
+
 
 @client.event
 async def on_ready():
@@ -371,6 +393,5 @@ async def on_ready():
         )
     )
     print("⚙️ | Bot is running")
-
 
 client.run(token)
