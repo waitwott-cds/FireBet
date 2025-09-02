@@ -16,7 +16,6 @@ client.help_command = commands.MinimalHelpCommand()
 # Global DogCoin price variable
 current_price = 500.0
 
-
 # --------------------------
 # Database Initializations
 # --------------------------
@@ -33,7 +32,6 @@ def initialize_database():
             )
         ''')
         conn.commit()
-
 
 def initialize_crypto_db():
     """Initialize crypto.db with a prices table for DogCoin price history."""
@@ -54,10 +52,8 @@ def initialize_crypto_db():
                            (timestamp, current_price, "dogcoin"))
             conn.commit()
 
-
 initialize_database()
 initialize_crypto_db()
-
 
 # --------------------------
 # Utility Functions for balance.db
@@ -71,7 +67,6 @@ def get_balance(user_id):
         row = cursor.fetchone()
     return row[0] if row else 0
 
-
 def get_holdings(user_id):
     """Return the DogCoin holdings for the given user."""
     with sqlite3.connect("balance.db") as conn:
@@ -79,7 +74,6 @@ def get_holdings(user_id):
         cursor.execute("SELECT holdings FROM balance WHERE user_id = ?", (user_id,))
         row = cursor.fetchone()
     return row[0] if row else 0
-
 
 def update_balance(user_id, amount):
     """Update the fiat balance for a user by the given amount (can be negative)."""
@@ -95,7 +89,6 @@ def update_balance(user_id, amount):
                            (user_id, new_balance, 0))
         conn.commit()
 
-
 def update_holdings(user_id, amount):
     """Update the DogCoin holdings for a user by the given amount (can be negative)."""
     with sqlite3.connect("balance.db") as conn:
@@ -110,7 +103,6 @@ def update_holdings(user_id, amount):
                            (user_id, 0, new_holdings))
         conn.commit()
 
-
 # --------------------------
 # Price History Functions (crypto.db)
 # --------------------------
@@ -124,7 +116,6 @@ def get_price_history():
     if len(data) > 30:
         data = data[-30:]
     return data
-
 
 def plot_price_history():
     """Plot DogCoin price history with a black background, grid color #333333, and 0.5x marker size."""
@@ -157,7 +148,6 @@ def plot_price_history():
     buf.seek(0)
     plt.close(fig)
     return buf
-
 
 # --------------------------
 # Background Task to Update Price
@@ -199,7 +189,6 @@ async def update_price_with_ai():
 
     print(f"[AI Bot] Updated price to {current_price} ⬢")
 
-
 # --------------------------
 # Bot Commands (All Responses as Embeds)
 # --------------------------
@@ -219,7 +208,6 @@ async def balance(ctx):
         color=discord.Color.green()
     )
     await ctx.send(embed=embed)
-
 
 @client.command()
 async def trade(ctx, action: str, amount: str):
@@ -302,7 +290,6 @@ async def trade(ctx, action: str, amount: str):
 
     await ctx.send(embed=embed)
 
-
 @client.command()
 async def price(ctx):
     """Display a graph of DogCoin price history."""
@@ -322,7 +309,6 @@ async def price(ctx):
         )
         await ctx.send(embed=embed)
 
-
 @client.command()
 async def work(ctx):
     """Earn a random amount of fiat ⬢ by working."""
@@ -335,7 +321,6 @@ async def work(ctx):
         color=discord.Color.gold()
     )
     await ctx.send(embed=embed)
-
 
 @client.command()
 async def give(ctx, member: discord.Member, amount: int):
@@ -369,7 +354,6 @@ async def give(ctx, member: discord.Member, amount: int):
         )
     await ctx.send(embed=embed)
 
-
 @client.command()
 async def ping(ctx):
     """Show the bot's latency."""
@@ -380,7 +364,6 @@ async def ping(ctx):
         color=discord.Color.blue()
     )
     await ctx.send(embed=embed)
-
 
 @client.event
 async def on_ready():
