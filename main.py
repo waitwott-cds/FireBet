@@ -191,8 +191,8 @@ async def update_price_with_ai():
 # Bot Commands (All Responses as Embeds)
 # --------------------------
 
-@client.command()
-async def balance(ctx, aliases=["bal", "wal"]):
+@client.command(aliases=["bal", "wal"]) #Balance Alias 
+async def balance(ctx):
     """Display your fiat balance and DogCoin holdings."""
     user_id = ctx.author.id
     with sqlite3.connect("balance.db") as conn:
