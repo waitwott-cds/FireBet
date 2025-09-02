@@ -192,7 +192,7 @@ async def update_price_with_ai():
 # --------------------------
 
 @client.command()
-async def balance(ctx):
+async def balance(ctx, aliases=["bal", "wal"]):
     """Display your fiat balance and DogCoin holdings."""
     user_id = ctx.author.id
     with sqlite3.connect("balance.db") as conn:
