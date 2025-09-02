@@ -81,7 +81,7 @@ def update_balance(user_id, amount):
         cursor = conn.cursor()
         cursor.execute("SELECT balance FROM balance WHERE user_id = ?", (user_id,))
         row = cursor.fetchone()
-        new_balance = round(max((row[0] + amount) if row else amount, 0),2)
+        new_balance = max((row[0] + amount) if row else amount, 0)
         if row:
             cursor.execute("UPDATE balance SET balance = ? WHERE user_id = ?", (new_balance, user_id))
         else:
@@ -94,7 +94,7 @@ def update_holdings(user_id, amount):
         cursor = conn.cursor()
         cursor.execute("SELECT holdings FROM balance WHERE user_id = ?", (user_id,))
         row = cursor.fetchone()
-        new_holdings = round(max((row[0] + amount) if row else amount, 0),2)
+        new_holdings = max((row[0] + amount) if row else amount, 0)
         if row:
             cursor.execute("UPDATE balance SET holdings = ? WHERE user_id = ?", (new_holdings, user_id))
         else:
@@ -225,9 +225,9 @@ async def trade(ctx, action: str, amount: str):
     # Determine trade amount
     if amount.lower() in ["max", "all"]:
         if action.lower() == "buy":
-            trade_amount = round(fiat / current_price, 2)
+            trade_amount = fiat / current_price
         elif action.lower() == "sell":
-            trade_amount = round(holdings, 2)
+            trade_amount = holdings
         else:
             embed = discord.Embed(
                 description="Invalid action. Use **buy** or **sell**.",
@@ -237,7 +237,7 @@ async def trade(ctx, action: str, amount: str):
             return
     else:
         try:
-            trade_amount = round(float(amount), 2)
+            trade_amount = float(amount)
         except ValueError:
             embed = discord.Embed(
                 description="Invalid amount. Please specify a number, 'max', or 'all'.",
