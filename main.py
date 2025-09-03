@@ -209,6 +209,29 @@ async def balance(ctx):
     )
     await ctx.send(embed=embed)
 
+@client.command(aliases=["rbal", "rst"])
+async def reset(ctx, member: discord.Member):
+    """Reset's a mentioned user, only if youre wott lol"""
+    if (ctx.author.id == 753409302680699021):
+        with sqlite3.connect("balance.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT balance, holdings FROM balance WHERE user_id = ?", (member.id,))
+            row = cursor.fetchone()
+        fiat, holdings = (row if row else (0, 0))
+        update_balance(member.id, -fiat)
+        embed = discord.Embed(
+            title=f"{member.name}'s fiat balance has been reset",
+            description=f"**bye bye monies**.",
+            color=discord.Color.green()
+        )
+    else:
+        embed = discord.Embed(
+            title=f"You ain't wott",
+            description=f"**bye bye**.",
+            color=discord.Color.red()
+        )
+    await ctx.send(embed=embed)
+
 @client.command()
 async def trade(ctx, action: str, amount: str):
     """
