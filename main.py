@@ -342,6 +342,15 @@ async def ping(ctx):
     )
     await ctx.send(embed=embed)
 
+@client.command()
+async def credits(ctx):
+    embed = discord.Embed(
+        title="Credits",
+        description=f"Main Developer | <@753409302680699021>",
+        color=discord.Color.green()
+    )
+    await ctx.send(embed=embed)
+
 @client.event
 async def on_ready():
     update_price_with_ai.start()
@@ -354,4 +363,5 @@ async def on_ready():
     )
     print("⚙️ | Bot is running")
 
+token = ""
 client.run(token)
